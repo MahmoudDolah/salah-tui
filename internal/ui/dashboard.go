@@ -9,7 +9,9 @@ import (
 	"github.com/MahmoudDolah/salah-tui/internal/prayer"
 )
 
-const minDashboardWidth = 60
+// minDashboardWidth is the minimum terminal width for the two-pane layout.
+// Derived from: (leftWidth=36 + border=2) + gap=2 + (rightWidth_min=20 + border=2) = 62.
+const minDashboardWidth = 62
 
 // RenderDashboard composes the full two-pane dashboard view.
 func RenderDashboard(

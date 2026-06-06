@@ -103,7 +103,7 @@ func runMinimal(cfg *config.Config, prayers []prayer.Prayer, ayah *api.Ayah, loc
 			return
 		}
 		d := prayer.Countdown(*next, now)
-		fmt.Printf("%s in %s\n", next.Name, prayer.FormatCountdown(d))
+		fmt.Printf("%s (%s) in %s\n", next.Name, prayer.FormatTime(next.Time, use12h), prayer.FormatCountdown(d))
 	}
 
 	if !watch {
