@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -241,11 +242,11 @@ type nominatimResult struct {
 func geocodeCity(city string) (lat, lng float64, timezone string, err error) {
 	client := &http.Client{Timeout: 10 * time.Second}
 
-	url := "https://nominatim.openstreetmap.org/search?q=" +
-		strings.ReplaceAll(city, " ", "+") +
+	reqURL := "https://nominatim.openstreetmap.org/search?q=" +
+		url.QueryEscape(city) +
 		"&format=json&limit=1"
 
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", reqURL, nil)
 	if err != nil {
 		return 0, 0, "", fmt.Errorf("build request: %w", err)
 	}

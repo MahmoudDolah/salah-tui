@@ -7,10 +7,10 @@ import (
 	"os"
 	"time"
 
-	"github.com/mhdolah/salah-tui/internal/api"
-	"github.com/mhdolah/salah-tui/internal/cache"
-	"github.com/mhdolah/salah-tui/internal/config"
-	"github.com/mhdolah/salah-tui/internal/prayer"
+	"github.com/MahmoudDolah/salah-tui/internal/api"
+	"github.com/MahmoudDolah/salah-tui/internal/cache"
+	"github.com/MahmoudDolah/salah-tui/internal/config"
+	"github.com/MahmoudDolah/salah-tui/internal/prayer"
 )
 
 func main() {
@@ -55,7 +55,7 @@ func main() {
 	}
 
 	// 6. Parse prayer times into structured types
-	prayers, err := prayer.ParseTimes(pt, loc, cfg.Display.ShowSunrise)
+	prayers, err := prayer.ParseTimes(pt, today, loc, cfg.Display.ShowSunrise)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error parsing prayer times: %v\n", err)
 		os.Exit(1)
@@ -64,7 +64,7 @@ func main() {
 	use12h := cfg.Display.TimeFormat == 12
 
 	if *minimal {
-		runMinimal(prayers, ayah, loc, use12h, *watch)
+		runMinimal(cfg, prayers, ayah, loc, use12h, *watch)
 		return
 	}
 
@@ -91,9 +91,22 @@ func main() {
 }
 
 // runMinimal prints minimal output (next prayer + countdown) and either exits or loops.
-func runMinimal(prayers []prayer.Prayer, ayah *api.Ayah, loc *time.Location, use12h, watch bool) {
+// In watch mode, prayer times are reloaded automatically when the date rolls over midnight.
+func runMinimal(cfg *config.Config, prayers []prayer.Prayer, ayah *api.Ayah, loc *time.Location, use12h, watch bool) {
+	loadedDate := time.Now().In(loc)
+
 	printMinimal := func() {
 		now := time.Now().In(loc)
+
+		if watch && (now.Year() != loadedDate.Year() || now.YearDay() != loadedDate.YearDay()) {
+			loadedDate = now
+			if newPrayers, err := loadAndParsePrayers(cfg, now, loc); err == nil {
+				prayers = newPrayers
+			} else {
+				fmt.Fprintf(os.Stderr, "Warning: could not reload prayer times: %v\n", err)
+			}
+		}
+
 		next := prayer.Next(prayers, now)
 		if next == nil {
 			fmt.Println("All prayers completed for today")
@@ -113,6 +126,15 @@ func runMinimal(prayers []prayer.Prayer, ayah *api.Ayah, loc *time.Location, use
 		printMinimal()
 		time.Sleep(1 * time.Second)
 	}
+}
+
+// loadAndParsePrayers fetches prayer times for the given date and parses them into Prayer structs.
+func loadAndParsePrayers(cfg *config.Config, date time.Time, loc *time.Location) ([]prayer.Prayer, error) {
+	pt, err := loadPrayerTimes(cfg, date)
+	if err != nil {
+		return nil, err
+	}
+	return prayer.ParseTimes(pt, date, loc, cfg.Display.ShowSunrise)
 }
 
 // loadPrayerTimes loads prayer times from cache if available, otherwise fetches from API.

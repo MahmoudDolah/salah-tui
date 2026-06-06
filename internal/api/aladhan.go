@@ -94,7 +94,8 @@ func Fetch(lat, lng float64, methodCode int) (*PrayerTimes, error) {
 	d := result.Data.Date
 
 	// Build the Hijri date string: "09 Dhū al-Ḥijjah 1446"
-	hijriStr := d.Hijri.Date + " " + d.Hijri.Month.En
+	// d.Hijri.Date is "DD-MM-YYYY" from the API; take only the day part.
+	hijriStr := d.Hijri.Date[:2] + " " + d.Hijri.Month.En + " " + d.Hijri.Year
 	// The date field from API is "DD-MM-YYYY", reformat for display
 	// We prefer d.Readable for the Gregorian date as it's already human-friendly
 	pt := &PrayerTimes{

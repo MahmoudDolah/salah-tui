@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/mhdolah/salah-tui/internal/api"
+	"github.com/MahmoudDolah/salah-tui/internal/api"
 )
 
 // Prayer represents a single prayer with its name and scheduled time.
@@ -13,13 +13,12 @@ type Prayer struct {
 	Time time.Time
 }
 
-// ParseTimes converts PrayerTimes string fields into Prayer structs for today.
+// ParseTimes converts PrayerTimes string fields into Prayer structs for the given date.
 // timeStr is in "HH:MM" 24h format from the API.
 // loc is the timezone location to use.
 // If showSunrise is true, Sunrise is included in the returned list.
-func ParseTimes(pt *api.PrayerTimes, loc *time.Location, showSunrise bool) ([]Prayer, error) {
-	now := time.Now().In(loc)
-	year, month, day := now.Date()
+func ParseTimes(pt *api.PrayerTimes, date time.Time, loc *time.Location, showSunrise bool) ([]Prayer, error) {
+	year, month, day := date.In(loc).Date()
 
 	parse := func(name, timeStr string) (Prayer, error) {
 		var hour, min int

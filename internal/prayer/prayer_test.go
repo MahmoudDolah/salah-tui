@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mhdolah/salah-tui/internal/api"
+	"github.com/MahmoudDolah/salah-tui/internal/api"
 )
 
 var testPT = &api.PrayerTimes{
@@ -16,9 +16,11 @@ var testPT = &api.PrayerTimes{
 	Isha:    "19:30",
 }
 
+var testDate = time.Date(2025, 6, 6, 0, 0, 0, 0, time.UTC)
+
 func TestParseTimes_HappyPath(t *testing.T) {
 	loc := time.UTC
-	prayers, err := ParseTimes(testPT, loc, true)
+	prayers, err := ParseTimes(testPT, testDate, loc, true)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -40,7 +42,7 @@ func TestParseTimes_HappyPath(t *testing.T) {
 }
 
 func TestParseTimes_NoSunrise(t *testing.T) {
-	prayers, err := ParseTimes(testPT, time.UTC, false)
+	prayers, err := ParseTimes(testPT, testDate, time.UTC, false)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -63,7 +65,7 @@ func TestParseTimes_InvalidTime(t *testing.T) {
 		Maghrib: "18:00",
 		Isha:    "19:30",
 	}
-	_, err := ParseTimes(bad, time.UTC, false)
+	_, err := ParseTimes(bad, testDate, time.UTC, false)
 	if err == nil {
 		t.Error("expected an error for invalid time string, got nil")
 	}

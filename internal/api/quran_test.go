@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mhdolah/salah-tui/internal/api"
+	"github.com/MahmoudDolah/salah-tui/internal/api"
 )
 
 func TestDailyIndex(t *testing.T) {
@@ -12,14 +12,14 @@ func TestDailyIndex(t *testing.T) {
 		date time.Time
 		want int
 	}{
-		// Jan 1 = day 1: (1 % 6236) + 1 = 2
-		{time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC), 2},
-		// Jan 2 = day 2: (2 % 6236) + 1 = 3
-		{time.Date(2025, 1, 2, 0, 0, 0, 0, time.UTC), 3},
-		// Dec 31 non-leap = day 365: (365 % 6236) + 1 = 366
-		{time.Date(2025, 12, 31, 0, 0, 0, 0, time.UTC), 366},
-		// Dec 31 leap year = day 366: (366 % 6236) + 1 = 367
-		{time.Date(2024, 12, 31, 0, 0, 0, 0, time.UTC), 367},
+		// Jan 1 = day 1: ((1-1) % 6236) + 1 = 1
+		{time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC), 1},
+		// Jan 2 = day 2: ((2-1) % 6236) + 1 = 2
+		{time.Date(2025, 1, 2, 0, 0, 0, 0, time.UTC), 2},
+		// Dec 31 non-leap = day 365: ((365-1) % 6236) + 1 = 365
+		{time.Date(2025, 12, 31, 0, 0, 0, 0, time.UTC), 365},
+		// Dec 31 leap year = day 366: ((366-1) % 6236) + 1 = 366
+		{time.Date(2024, 12, 31, 0, 0, 0, 0, time.UTC), 366},
 	}
 	for _, tc := range tests {
 		got := api.DailyIndex(tc.date)

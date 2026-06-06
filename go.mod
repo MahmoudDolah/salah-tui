@@ -1,4 +1,4 @@
-module github.com/mhdolah/salah-tui
+module github.com/MahmoudDolah/salah-tui
 
 go 1.25.0
 

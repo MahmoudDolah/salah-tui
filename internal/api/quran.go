@@ -57,10 +57,10 @@ func FetchByRef(surah, ayah int) (*Ayah, error) {
 }
 
 // DailyIndex returns the global ayah index for the given date.
-// Uses (dayOfYear % 6236) + 1 to stay in 1–6236 range.
+// Uses ((dayOfYear - 1) % 6236) + 1 to stay in 1–6236 range.
 func DailyIndex(t time.Time) int {
 	dayOfYear := t.YearDay()
-	return (dayOfYear % 6236) + 1
+	return ((dayOfYear - 1) % 6236) + 1
 }
 
 // fetchAyah performs the HTTP request and parses the response for the given URL.
