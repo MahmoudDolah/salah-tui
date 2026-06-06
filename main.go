@@ -7,9 +7,11 @@ import (
 	"os"
 	"time"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/MahmoudDolah/salah-tui/internal/api"
 	"github.com/MahmoudDolah/salah-tui/internal/cache"
 	"github.com/MahmoudDolah/salah-tui/internal/config"
+	"github.com/MahmoudDolah/salah-tui/internal/model"
 	"github.com/MahmoudDolah/salah-tui/internal/prayer"
 )
 
@@ -68,25 +70,13 @@ func main() {
 		return
 	}
 
-	// Dashboard mode — Phase 2 TUI
-	fmt.Println("Dashboard coming in Phase 2")
-	fmt.Printf("\nCity:     %s\n", cfg.Location.City)
-	fmt.Printf("Date:     %s / %s\n", pt.GregorianDate, pt.HijriDate)
-	fmt.Println()
-	fmt.Println("Prayer Schedule:")
-	for _, p := range prayers {
-		fmt.Printf("  %-10s %s\n", p.Name, prayer.FormatTime(p.Time, use12h))
-	}
-
-	now := time.Now().In(loc)
-	next := prayer.Next(prayers, now)
-	if next != nil {
-		d := prayer.Countdown(*next, now)
-		fmt.Printf("\nNext: %s in %s\n", next.Name, prayer.FormatCountdown(d))
-	}
-
-	if ayah != nil {
-		fmt.Printf("\nAyah of the Day:\n%s\n— %s\n", ayah.Translation, ayah.Reference)
+	// Dashboard mode
+	offline := false
+	m := model.New(cfg, loc, prayers, pt.HijriDate, pt.GregorianDate, ayah, offline)
+	p := tea.NewProgram(m, tea.WithAltScreen())
+	if _, err := p.Run(); err != nil {
+		fmt.Fprintf(os.Stderr, "Error running dashboard: %v\n", err)
+		os.Exit(1)
 	}
 }
 
