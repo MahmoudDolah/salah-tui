@@ -1,0 +1,25 @@
+# Binary
+salah-tui
+
+# Go build artifacts
+*.exe
+*.test
+*.out
+vendor/
+
+# Test coverage
+coverage.html
+coverage.out
+
+# Claude Code
+.claude/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
