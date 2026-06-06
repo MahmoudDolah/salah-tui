@@ -301,15 +301,57 @@ func TestUpdate_LookupResult_SetsError(t *testing.T) {
 	}
 }
 
-func TestUpdate_ErrMsg_SetsFatalErr(t *testing.T) {
+func TestUpdate_PrayerErrMsg_SetsError(t *testing.T) {
 	base := testModel()
 	base.loading = true
-	m, _ := update(base, errMsg{err: fmt.Errorf("something broke")})
-	if m.fatalErr == "" {
-		t.Error("expected fatalErr to be set")
+	m, _ := update(base, prayerErrMsg{err: fmt.Errorf("connection refused")})
+	if m.prayerErr == "" {
+		t.Error("expected prayerErr to be set")
 	}
 	if m.loading {
-		t.Error("expected loading=false after error")
+		t.Error("expected loading=false after prayer error")
+	}
+}
+
+func TestUpdate_AyahErrMsg_SetsError(t *testing.T) {
+	m, _ := update(testModel(), ayahErrMsg{err: fmt.Errorf("no ayah data")})
+	if m.ayahErr == "" {
+		t.Error("expected ayahErr to be set")
+	}
+}
+
+func TestUpdate_PrayerTimesLoaded_ClearsPrayerErr(t *testing.T) {
+	base := testModel()
+	base.prayerErr = "some error"
+	newPrayers := []prayer.Prayer{
+		{Name: "Fajr", Time: time.Date(2025, 6, 7, 5, 30, 0, 0, time.UTC)},
+	}
+	m, _ := update(base, prayerTimesLoadedMsg{prayers: newPrayers})
+	if m.prayerErr != "" {
+		t.Error("expected prayerErr to be cleared after successful load")
+	}
+}
+
+func TestUpdate_AyahLoaded_ClearsAyahErr(t *testing.T) {
+	base := testModel()
+	base.ayahErr = "some error"
+	ayah := &api.Ayah{Reference: "1:1"}
+	m, _ := update(base, ayahLoadedMsg{ayah: ayah})
+	if m.ayahErr != "" {
+		t.Error("expected ayahErr to be cleared after successful ayah load")
+	}
+}
+
+func TestUpdate_Key_R_ClearsBothErrors(t *testing.T) {
+	base := testModel()
+	base.prayerErr = "prayer fetch failed"
+	base.ayahErr = "ayah fetch failed"
+	m, _ := update(base, keyMsg("r"))
+	if m.prayerErr != "" {
+		t.Error("expected prayerErr to be cleared on refresh")
+	}
+	if m.ayahErr != "" {
+		t.Error("expected ayahErr to be cleared on refresh")
 	}
 }
 
@@ -323,12 +365,28 @@ func TestView_LoadingWhenNoPrayers(t *testing.T) {
 	}
 }
 
-func TestView_ShowsFatalError(t *testing.T) {
+func TestView_ShowsPrayerError(t *testing.T) {
 	m := testModel()
-	m.fatalErr = "connection refused"
+	m.prayers = nil
+	m.prayerErr = "connection refused"
+	m.termWidth = 120
+	m.termHeight = 40
 	out := m.View()
 	if !strings.Contains(out, "connection refused") {
-		t.Errorf("expected fatal error in view, got: %q", out)
+		t.Errorf("expected prayer error in view, got: %q", out)
+	}
+}
+
+func TestView_LoadingSkippedWhenPrayerErrSet(t *testing.T) {
+	m := testModel()
+	m.prayers = nil
+	m.prayerErr = "some error"
+	m.termWidth = 120
+	m.termHeight = 40
+	// Should not show "Loading" — should show the error instead
+	out := m.View()
+	if strings.Contains(out, "Loading") {
+		t.Error("expected no loading indicator when prayerErr is set")
 	}
 }
 

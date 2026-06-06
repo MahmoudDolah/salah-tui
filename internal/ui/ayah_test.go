@@ -16,21 +16,38 @@ var testAyah = &api.Ayah{
 }
 
 func TestRenderAyah_NilReturnsUnavailable(t *testing.T) {
-	out := stripANSI(RenderAyah(nil, 40))
+	out := stripANSI(RenderAyah(nil, "", 40))
 	if !strings.Contains(out, "unavailable") {
 		t.Errorf("expected 'unavailable' for nil ayah, got: %q", out)
 	}
 }
 
+func TestRenderAyah_NilWithErrorShowsErrorAndRetry(t *testing.T) {
+	out := stripANSI(RenderAyah(nil, "fetch ayah: timeout", 40))
+	if !strings.Contains(out, "fetch ayah: timeout") {
+		t.Errorf("expected error message in ayah pane, got: %q", out)
+	}
+	if !strings.Contains(out, "Press r to retry") {
+		t.Errorf("expected retry hint in ayah pane, got: %q", out)
+	}
+}
+
+func TestRenderAyah_NilWithErrorShowsHeader(t *testing.T) {
+	out := stripANSI(RenderAyah(nil, "some error", 40))
+	if !strings.Contains(out, "Ayah of the Day") {
+		t.Errorf("expected header in ayah error pane, got: %q", out)
+	}
+}
+
 func TestRenderAyah_ContainsArabic(t *testing.T) {
-	out := stripANSI(RenderAyah(testAyah, 40))
+	out := stripANSI(RenderAyah(testAyah, "", 40))
 	if !strings.Contains(out, testAyah.Arabic) {
 		t.Error("expected Arabic text in output")
 	}
 }
 
 func TestRenderAyah_ContainsTranslation(t *testing.T) {
-	out := stripANSI(RenderAyah(testAyah, 40))
+	out := stripANSI(RenderAyah(testAyah, "", 40))
 	// Translation may be wrapped; check for a substring
 	if !strings.Contains(out, "Verily We have granted") {
 		t.Errorf("expected translation text in output, got:\n%s", out)
@@ -38,7 +55,7 @@ func TestRenderAyah_ContainsTranslation(t *testing.T) {
 }
 
 func TestRenderAyah_ContainsReference(t *testing.T) {
-	out := stripANSI(RenderAyah(testAyah, 40))
+	out := stripANSI(RenderAyah(testAyah, "", 40))
 	if !strings.Contains(out, "Al-Kawthar 108:1") {
 		t.Error("expected reference in output")
 	}

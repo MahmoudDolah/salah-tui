@@ -36,7 +36,8 @@ type lookupResultMsg struct {
 	err  string
 }
 
-type errMsg struct{ err error }
+type prayerErrMsg struct{ err error }
+type ayahErrMsg struct{ err error }
 
 // --- model ---
 
@@ -58,7 +59,8 @@ type Model struct {
 
 	showHelp      bool
 	loading       bool
-	fatalErr      string
+	prayerErr     string
+	ayahErr       string
 
 	termWidth     int
 	termHeight    int
@@ -108,10 +110,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.gregorianDate = msg.gregorianDate
 		m.offline = msg.offline
 		m.loading = false
+		m.prayerErr = ""
 
 	case ayahLoadedMsg:
 		if msg.ayah != nil {
 			m.ayah = msg.ayah
+			m.ayahErr = ""
 		}
 		if msg.offline {
 			m.offline = true
@@ -121,9 +125,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.lookupResult = msg.ayah
 		m.lookupErr = msg.err
 
-	case errMsg:
-		m.fatalErr = msg.err.Error()
+	case prayerErrMsg:
+		m.prayerErr = msg.err.Error()
 		m.loading = false
+
+	case ayahErrMsg:
+		m.ayahErr = msg.err.Error()
 	}
 
 	return m, nil
@@ -144,6 +151,8 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case "r":
 		m.loading = true
 		m.offline = false
+		m.prayerErr = ""
+		m.ayahErr = ""
 		return m, tea.Batch(cmdRefreshPrayers(m.cfg, m.loc), cmdRefreshAyah())
 
 	case "/":
@@ -191,10 +200,7 @@ func (m Model) handleLookupKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
-	if m.fatalErr != "" {
-		return ui.StyleError.Render("Error: "+m.fatalErr) + "\n"
-	}
-	if len(m.prayers) == 0 {
+	if len(m.prayers) == 0 && m.prayerErr == "" {
 		return "Loading…\n"
 	}
 
@@ -213,6 +219,8 @@ func (m Model) View() string {
 		m.lookupResult,
 		m.lookupErr,
 		m.showHelp,
+		m.prayerErr,
+		m.ayahErr,
 		m.termWidth,
 		m.termHeight,
 	)
@@ -240,11 +248,11 @@ func cmdRefreshPrayers(cfg *config.Config, loc *time.Location) tea.Cmd {
 			// Try cache fallback
 			cached, cerr := cache.ReadPrayerTimes(today)
 			if cerr != nil || cached == nil {
-				return errMsg{fmt.Errorf("fetch prayer times: %w", err)}
+				return prayerErrMsg{fmt.Errorf("fetch prayer times: %w", err)}
 			}
 			var cachedPT api.PrayerTimes
 			if jerr := json.Unmarshal(cached, &cachedPT); jerr != nil {
-				return errMsg{fmt.Errorf("fetch prayer times: %w", err)}
+				return prayerErrMsg{fmt.Errorf("fetch prayer times: %w", err)}
 			}
 			pt = &cachedPT
 			offline = true
@@ -257,7 +265,7 @@ func cmdRefreshPrayers(cfg *config.Config, loc *time.Location) tea.Cmd {
 
 		prayers, perr := prayer.ParseTimes(pt, today, loc, cfg.Display.ShowSunrise)
 		if perr != nil {
-			return errMsg{perr}
+			return prayerErrMsg{perr}
 		}
 
 		return prayerTimesLoadedMsg{
@@ -278,11 +286,11 @@ func cmdRefreshAyah() tea.Cmd {
 		if err != nil {
 			cached, cerr := cache.ReadAyah(today)
 			if cerr != nil || cached == nil {
-				return ayahLoadedMsg{offline: true}
+				return ayahErrMsg{fmt.Errorf("fetch ayah: %w", err)}
 			}
 			var cachedAyah api.Ayah
 			if jerr := json.Unmarshal(cached, &cachedAyah); jerr != nil {
-				return ayahLoadedMsg{offline: true}
+				return ayahErrMsg{fmt.Errorf("fetch ayah: %w", err)}
 			}
 			ayah = &cachedAyah
 			offline = true

@@ -9,9 +9,17 @@ import (
 
 // RenderAyah renders the right pane: Arabic text, translation, and reference.
 // width controls text wrapping for the translation.
-func RenderAyah(ayah *api.Ayah, width int) string {
+func RenderAyah(ayah *api.Ayah, ayahErr string, width int) string {
 	if ayah == nil {
-		return StyleError.Render("Ayah unavailable")
+		var b strings.Builder
+		b.WriteString(StyleHeader.Render("Ayah of the Day") + "\n\n")
+		if ayahErr != "" {
+			b.WriteString(StyleError.Render(ayahErr) + "\n")
+			b.WriteString(StyleDimText.Render("Press r to retry."))
+		} else {
+			b.WriteString(StyleError.Render("Ayah unavailable"))
+		}
+		return b.String()
 	}
 
 	var b strings.Builder

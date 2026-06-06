@@ -17,6 +17,7 @@ func RenderSchedule(
 	now time.Time,
 	use12h bool,
 	offline bool,
+	prayerErr string,
 	width int,
 ) string {
 	var b strings.Builder
@@ -64,6 +65,11 @@ func RenderSchedule(
 			timeFmt,
 		)
 		b.WriteString(row + "\n")
+	}
+
+	if prayerErr != "" {
+		b.WriteString("\n" + StyleError.Render(prayerErr) + "\n")
+		b.WriteString(StyleDimText.Render("Press r to retry.") + "\n")
 	}
 
 	_ = width // available for future alignment

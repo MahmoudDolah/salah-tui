@@ -26,6 +26,8 @@ func RenderDashboard(
 	lookupResult *api.Ayah,
 	lookupErr string,
 	showHelp bool,
+	prayerErr string,
+	ayahErr string,
 	termWidth, termHeight int,
 ) string {
 	if termWidth < minDashboardWidth {
@@ -40,12 +42,12 @@ func RenderDashboard(
 		rightWidth = 20
 	}
 
-	leftContent := RenderSchedule(prayers, hijriDate, gregorianDate, now, use12h, offline, leftWidth)
+	leftContent := RenderSchedule(prayers, hijriDate, gregorianDate, now, use12h, offline, prayerErr, leftWidth)
 	var rightContent string
 	if lookupMode {
 		rightContent = RenderAyahLookup(lookupQuery, lookupResult, lookupErr, rightWidth)
 	} else {
-		rightContent = RenderAyah(ayah, rightWidth)
+		rightContent = RenderAyah(ayah, ayahErr, rightWidth)
 	}
 
 	leftPane := StyleBorder.Width(leftWidth).Height(termHeight - 4).Render(leftContent)

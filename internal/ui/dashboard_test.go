@@ -31,7 +31,7 @@ func renderDashStripped(w, h int, lookupMode, showHelp bool) string {
 		dashAyah, dashNow,
 		true, false,
 		lookupMode, "", nil, "",
-		showHelp, w, h,
+		showHelp, "", "", w, h,
 	)
 	return stripANSI(out)
 }
@@ -40,7 +40,7 @@ func TestRenderDashboard_NarrowFallback(t *testing.T) {
 	out := stripANSI(RenderDashboard(
 		dashPrayers, "06 Rajab 1446", "06 Jun 2025",
 		dashAyah, dashNow, true, false,
-		false, "", nil, "", false,
+		false, "", nil, "", false, "", "",
 		minDashboardWidth-1, 40, // 61 cols — just below the two-pane threshold
 	))
 	if !strings.Contains(out, "too narrow") {

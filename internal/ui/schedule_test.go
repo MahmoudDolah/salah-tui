@@ -21,7 +21,7 @@ var testPrayers = []prayer.Prayer{
 }
 
 func renderScheduleStripped(offline bool) string {
-	out := RenderSchedule(testPrayers, "06 Rajab 1446", "06 Jun 2025", testNow, true, offline, 40)
+	out := RenderSchedule(testPrayers, "06 Rajab 1446", "06 Jun 2025", testNow, true, offline, "", 40)
 	return stripANSI(out)
 }
 
@@ -87,7 +87,7 @@ func TestRenderSchedule_NoMarkerOnPassedPrayers(t *testing.T) {
 
 func TestRenderSchedule_AllPrayersCompleted(t *testing.T) {
 	afterIsha := time.Date(2025, 6, 6, 23, 0, 0, 0, time.UTC)
-	out := stripANSI(RenderSchedule(testPrayers, "06 Rajab 1446", "06 Jun 2025", afterIsha, true, false, 40))
+	out := stripANSI(RenderSchedule(testPrayers, "06 Rajab 1446", "06 Jun 2025", afterIsha, true, false, "", 40))
 	// No ▶ marker — all prayers done
 	if strings.Contains(out, "▶") {
 		t.Error("expected no ▶ marker after all prayers completed")
@@ -96,12 +96,29 @@ func TestRenderSchedule_AllPrayersCompleted(t *testing.T) {
 
 func TestRenderSchedule_BeforeFajr(t *testing.T) {
 	beforeFajr := time.Date(2025, 6, 6, 3, 0, 0, 0, time.UTC)
-	out := stripANSI(RenderSchedule(testPrayers, "06 Rajab 1446", "06 Jun 2025", beforeFajr, true, false, 40))
+	out := stripANSI(RenderSchedule(testPrayers, "06 Rajab 1446", "06 Jun 2025", beforeFajr, true, false, "", 40))
 	// Fajr should be next
 	if !strings.Contains(out, "▶") {
 		t.Error("expected ▶ marker before Fajr")
 	}
 	if !strings.Contains(out, "Fajr") {
 		t.Error("expected Fajr in output")
+	}
+}
+
+func TestRenderSchedule_ErrorBanner(t *testing.T) {
+	out := stripANSI(RenderSchedule(testPrayers, "06 Rajab 1446", "06 Jun 2025", testNow, true, false, "connection refused", 40))
+	if !strings.Contains(out, "connection refused") {
+		t.Error("expected error message in schedule pane")
+	}
+	if !strings.Contains(out, "Press r to retry") {
+		t.Error("expected retry hint in schedule pane")
+	}
+}
+
+func TestRenderSchedule_NoErrorBannerByDefault(t *testing.T) {
+	out := renderScheduleStripped(false)
+	if strings.Contains(out, "retry") {
+		t.Error("unexpected retry hint when no error")
 	}
 }
