@@ -25,7 +25,7 @@ A terminal UI for daily Muslim prayer times. Opens to a split-pane dashboard sho
 
 ## Installation
 
-**Requirements:** Go 1.21+
+**Requirements:** Go 1.25+
 
 ```sh
 # Build from source
@@ -49,8 +49,11 @@ salah-tui
 salah-tui --minimal
 
 # Watch mode: refresh every second (useful for tmux status bars)
+# Note: --watch has no effect without --minimal
 salah-tui --minimal --watch
 ```
+
+**Minimum terminal width:** the two-pane dashboard requires at least 62 columns. Narrower terminals automatically fall back to a single-line view.
 
 ### tmux status bar
 
@@ -58,14 +61,10 @@ Add the following to your `~/.tmux.conf` to show the next prayer in your status 
 
 ```
 set -g status-right "#(salah-tui --minimal)"
-```
-
-Or with auto-refresh:
-
-```
-set -g status-right "#(salah-tui --minimal)"
 set -g status-interval 1
 ```
+
+The `status-interval 1` setting tells tmux to re-run the command every second, keeping the countdown live. Without it, tmux updates the status bar much less frequently.
 
 ---
 
@@ -89,36 +88,60 @@ Press `/`, type a reference in `surah:ayah` format (e.g. `2:255`), and press `En
 
 Config file: `~/.config/salah/config.toml`
 
-Created automatically on first launch. You will be prompted for your city name (coordinates are resolved via Nominatim) and your preferred calculation method.
+### First-run setup
+
+If no config file exists, salah-tui runs an interactive setup wizard:
+
+1. **City name** — enter your city; coordinates are resolved automatically via Nominatim. If geocoding fails, you will be prompted to enter latitude and longitude manually.
+2. **Calculation method** — choose from options 1–4 (see table below). Press `Enter` to accept the default (ISNA).
+3. The config file is written and the dashboard launches immediately.
+
+> **Timezone note:** Nominatim does not return timezone information, so `timezone` always defaults to `UTC` after setup. Countdowns and prayer times will be wrong unless you update this field to your local IANA timezone (e.g. `"America/New_York"`, `"Europe/London"`, `"Asia/Karachi"`). Edit the config file after first launch to fix this.
+
+> **Method note:** the setup wizard only offers methods 1–4 (ISNA, MWL, Egyptian, UmmAlQura). To use Karachi, Tehran, or Shia, set the `method` field manually in the config file after setup.
+
+### Editing the config
 
 ```toml
 [location]
 latitude  = 40.7128
 longitude = -74.0060
 city      = "New York"
-timezone  = "America/New_York"
+timezone  = "America/New_York"  # IANA timezone — set this after first run
 
 [calculation]
 # Options: ISNA, MWL, Egyptian, Karachi, UmmAlQura, Tehran, Shia
 method = "ISNA"
 
 [display]
-# 12 or 24
-time_format  = 12
-show_sunrise = true
+time_format  = 12   # 12 or 24
+show_sunrise = true # include Sunrise in the prayer schedule
 ```
+
+### Resetting or repairing the config
+
+To re-run the setup wizard, delete the config file and re-launch:
+
+```sh
+rm ~/.config/salah/config.toml
+salah-tui
+```
+
+If the config file is malformed, salah-tui will print an error and exit. Delete or fix the file and re-run.
 
 ### Calculation methods
 
-| Key | Authority |
-|-----|-----------|
-| `ISNA` | Islamic Society of North America |
-| `MWL` | Muslim World League |
-| `Egyptian` | Egyptian General Authority of Survey |
-| `UmmAlQura` | Umm Al-Qura University, Makkah |
-| `Karachi` | University of Islamic Sciences, Karachi |
-| `Tehran` | Institute of Geophysics, University of Tehran |
-| `Shia` | Shia Ithna Ashari / Leva Research Institute, Qum |
+The setup wizard offers methods 1–4. All seven can be set manually in the config file.
+
+| Key | Authority | Setup wizard |
+|-----|-----------|:---:|
+| `ISNA` | Islamic Society of North America | ✓ |
+| `MWL` | Muslim World League | ✓ |
+| `Egyptian` | Egyptian General Authority of Survey | ✓ |
+| `UmmAlQura` | Umm Al-Qura University, Makkah | ✓ |
+| `Karachi` | University of Islamic Sciences, Karachi | manual only |
+| `Tehran` | Institute of Geophysics, University of Tehran | manual only |
+| `Shia` | Shia Ithna Ashari / Leva Research Institute, Qum | manual only |
 
 ---
 

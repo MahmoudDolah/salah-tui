@@ -34,14 +34,14 @@ The app follows the bubbletea Model-Update-View pattern. All application state l
 | `internal/api/quran.go` | Fetch/parse ayah from [alquran.cloud API](https://alquran.cloud/api) |
 | `internal/cache/` | File-based JSON cache under `~/.cache/salah/`; keyed by date |
 | `internal/config/` | TOML config at `~/.config/salah/config.toml`; triggers first-run setup if missing |
-| `internal/prayer/` | Pure logic: next prayer calculation, countdown formatting, countdown color threshold |
-| `internal/ui/` | Lipgloss renderers: `dashboard.go` (2-pane layout), `schedule.go` (left pane), `ayah.go` (right pane), `minimal.go` (single-line mode), `styles.go` (color palette) |
+| `internal/prayer/` | Pure logic: next prayer calculation, countdown formatting |
+| `internal/ui/` | Lipgloss renderers: `dashboard.go` (2-pane layout), `schedule.go` (left pane), `ayah.go` (right pane), `styles.go` (color palette + countdown color thresholds) |
 | `internal/model/` | Bubbletea `Model` struct; `Init`, `Update`, `View` |
 
 ## Modes
 
 - **Dashboard** (default): split-pane with full prayer schedule (left) + ayah of the day (right)
-- **Minimal** (`--minimal`): single-line "NextPrayer HH:MM:SS", suitable for tmux; `--watch` enables auto-refresh
+- **Minimal** (`--minimal`): single-line `"NextPrayer (12:30 PM) in HH:MM:SS"`, suitable for tmux; `--watch` enables auto-refresh every second with midnight reload
 - **Quran lookup**: press `/` inside the dashboard to search by `surah:ayah` reference
 
 ## Caching
@@ -54,11 +54,11 @@ Old cache files are deleted on launch. When offline and a cache file exists, the
 
 ## Countdown color thresholds
 
-Defined in `internal/ui/styles.go` and used by `internal/prayer/`:
+Defined in `internal/ui/styles.go` (`CountdownStyle`) and applied in `internal/ui/schedule.go`:
 - `> 15 min` → White
 - `≤ 15 min` → Amber `#FFA726`
 - `≤ 5 min` → Red `#EF5350`
 
 ## Ayah of the day
 
-The daily ayah is seeded deterministically by date (`time.Now().YearDay()`) so it remains stable across multiple opens of the app on the same day.
+The daily ayah is seeded deterministically by `api.DailyIndex(date)`, which maps `dayOfYear` to a global ayah index via `((dayOfYear - 1) % 6236) + 1` (range 1–366, stable within a calendar day).
